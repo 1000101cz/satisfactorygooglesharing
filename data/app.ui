@@ -21,7 +21,7 @@
        <item>
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Saved files path (local)</string>
+          <string>Saved files path</string>
          </property>
         </widget>
        </item>
@@ -63,7 +63,22 @@
        </font>
       </property>
       <property name="text">
-       <string>path to local folder with Satosfactory saved games</string>
+       <string>Path to local folder with Satosfactory saved games</string>
+      </property>
+      <property name="indent">
+       <number>30</number>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_14">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+      <property name="text">
+       <string>Usually looks something like this: C:\Users\username\AppData\Local\FactoryGame\Saved\SaveGames\76561198260829925</string>
       </property>
       <property name="indent">
        <number>30</number>
@@ -94,7 +109,11 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_world_name"/>
+        <widget class="QLineEdit" name="lineEdit_world_name">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_world_name">
@@ -108,8 +127,13 @@
     </item>
     <item>
      <widget class="QLabel" name="label_11">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
       <property name="text">
-       <string>how you (or your friend) named the world you want to sync in-game</string>
+       <string>How you (or your friend) named the world you want to sync in-game</string>
       </property>
       <property name="indent">
        <number>30</number>
@@ -140,7 +164,11 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit"/>
+        <widget class="QLineEdit" name="lineEdit">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_google_app_url">
@@ -189,7 +217,7 @@
        </font>
       </property>
       <property name="text">
-       <string>automatically check for new saves from Google Drive every 'Sync period' minutes</string>
+       <string>Automatically check for new saves from Google Drive every 'Sync period' minutes</string>
       </property>
       <property name="indent">
        <number>30</number>
@@ -256,7 +284,7 @@
        </font>
       </property>
       <property name="text">
-       <string>time period for fetching new save files from Google Drive</string>
+       <string>Time period for fetching new save files from Google Drive</string>
       </property>
       <property name="indent">
        <number>30</number>
@@ -471,7 +499,7 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>336</width>
+           <width>295</width>
            <height>20</height>
           </size>
          </property>
@@ -479,6 +507,12 @@
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_fetch">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="text">
           <string>Sync</string>
          </property>
@@ -491,11 +525,18 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>335</width>
+           <width>295</width>
            <height>20</height>
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_play">
+         <property name="text">
+          <string>Play</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
