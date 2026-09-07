@@ -5,53 +5,7 @@ from typing import Optional, List
 from loguru import logger
 from pathlib import Path
 from .settings import app_settings
-
-
-class SaveFile:
-    def __init__(self):
-        self.filename: Optional[str] = None
-        self.drive_id: Optional[str] = None
-        self.creation_time: Optional[datetime] = None
-
-    @property
-    def local_path(self) -> Optional[Path]:
-        return (app_settings.saved_files_path / self.filename) if self.filename else None
-
-    @property
-    def is_local(self) -> bool:
-        return self.local_path.is_file() if self.local_path else False
-
-    @property
-    def is_online(self) -> bool:
-        return self.drive_id is not None
-
-    @property
-    def world_name(self) -> Optional[str]:
-        if self.filename:
-            parts = self.filename.split('_')
-            if len(parts) >= 2:
-                return parts[0]
-        return None
-
-    def __str__(self):
-        return f"Filename: {self.filename} | Drive ID: {self.drive_id} | Creation Time: {self.creation_time} | Local Path: {self.local_path} | Is Local: {self.is_local} | Is Online: {self.is_online}"
-
-    def from_dict(self, data: dict):
-        self.filename = data.get("filename")
-        self.drive_id = data.get("drive_id")
-        self.creation_time = data.get("creation_time")
-
-    def to_dict(self) -> dict:
-        return {
-            "filename": self.filename,
-            "drive_id": self.drive_id,
-            "creation_time": self.creation_time
-        }
-
-    def from_drive_dict(self, data: dict):
-        self.filename = data.get("name")
-        self.drive_id = data.get("id")
-        self.creation_time = datetime.fromisoformat(data["updated"]) if data.get("updated") else None
+from .settings.settings import SaveFile
 
 
 def get_files() -> List[SaveFile]:
