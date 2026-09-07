@@ -1,3 +1,13 @@
+# Satisfactory Google Drive Sharing
+
+Python 3.13.9
+
+Run: `python main.py`
+
+Build exe: `.\build.ps1`
+
+Clear project folder: `.\clear.ps1`
+
 ## Shared google folder creation
 
 Create folder in your google Drive, set it as shared - via link and allow everyone with the link to read and write in there.
