@@ -1,3 +1,8 @@
 .env
+
+build/*
+dist/*
+SatisfactorySaveSync.spec
+
 src/__pycache__/*
 src/settings/__pycache__/*

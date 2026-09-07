@@ -1,0 +1,2 @@
+pip install pyinstaller
+pyinstaller --noconsole --onefile --icon="data/icon.ico" --add-data "data/app.ui;data" --add-data "data/icon.ico;data" --name "SatisfactorySaveSync" main.py

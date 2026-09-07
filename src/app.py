@@ -3,16 +3,17 @@ from PyQt6 import uic
 from loguru import logger
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 from datetime import datetime
 
 from .settings import app_settings, app_runtime, synced_list
 from .app_investigation import is_steam_running, is_satisfactory_running, GameMonitorThread, AutoSyncThread
-from .google_drive import get_files, get_file, push_file, SaveFile
-from .local_files import get_user_save_directory
+from .google_drive import get_files
 from .functions import compare, upload_and_download_diff
+from .utils import get_resource_path
 
 
-ui_path = Path(__file__).parent.parent / 'data' / 'app.ui'
+ui_path = get_resource_path('data/app.ui')
 window = uic.loadUiType(str(ui_path))[0]
 
 
@@ -22,6 +23,9 @@ class Window(QMainWindow, window):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
         self.setWindowTitle("Satisfactory Save Syncer")
+        
+        icon_path = get_resource_path('data/icon.ico')
+        self.setWindowIcon(QIcon(str(icon_path)))
         
         self._connects()
         
