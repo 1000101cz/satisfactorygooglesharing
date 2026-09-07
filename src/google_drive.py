@@ -48,7 +48,7 @@ def get_file(file: SaveFile) -> Optional[SaveFile]:
             file.creation_time = datetime.fromisoformat(data["updated"]).strftime('%d.%m.%Y %H:%M:%S')
             file_bytes = base64.b64decode(data["fileContent"])
             
-            # Zajištění existencí nadřazené složky
+            # Ensure parent folder exists
             file.local_path.parent.mkdir(parents=True, exist_ok=True)
             file.local_path.write_bytes(file_bytes)
             
@@ -74,7 +74,7 @@ def push_file(file: SaveFile) -> Optional[SaveFile]:
         return None
 
     if not file.local_path.exists() or not file.local_path.is_file():
-        logger.error(f"Lokální soubor neexistuje: {file.local_path}")
+        logger.error(f"Local file does not exist: {file.local_path}")
         return None
 
     try:

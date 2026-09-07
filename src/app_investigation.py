@@ -23,7 +23,7 @@ class GameMonitorThread(QThread):
     # True = is running, False = is not running
     status_changed = pyqtSignal(bool)
 
-    def __init__(self, check_interval_seconds: int = 3):
+    def __init__(self, check_interval_seconds: int = 1):
         super().__init__()
         self.interval = check_interval_seconds
         self._is_running = True
@@ -40,6 +40,31 @@ class GameMonitorThread(QThread):
                     self.status_changed.emit(current_state)
 
             time.sleep(self.interval)
+
+    def stop(self):
+        self._is_running = False
+        self.wait()
+        
+
+class AutoSyncThread(QThread):
+    time_passed = pyqtSignal()
+    
+    def __init__(self):
+        super().__init__()
+        self._is_running = True
+
+    def run(self):
+        from .settings import app_settings
+        while self._is_running:
+            if app_settings.autosync:
+                logger.debug(f"Waiting before autosync: {app_settings.sync_period_min * 60}s")
+                time.sleep(app_settings.sync_period_min * 60)
+                if app_settings.autosync:
+                    self.time_passed.emit()
+                else:
+                    logger.debug("Autosync has been disabled meanwhile, skipping sync...")
+            else:
+                time.sleep(1)
 
     def stop(self):
         self._is_running = False

@@ -19,6 +19,7 @@ class AppSettings:
         self.saved_files_path: Optional[Path] = get_user_save_directory()
         self.world_name: str = ""
         self.google_app_url: Optional[str] = None
+        self.autosync: bool = False
         self.sync_period_min: int = 5
         
     def load(self):
@@ -41,14 +42,16 @@ class AppSettings:
             "saved_files_path": str(self.saved_files_path),
             "world_name": self.world_name,
             "google_app_url": self.google_app_url,
+            "autosync": self.autosync,
             "sync_period_min": self.sync_period_min
         }
         
     def _from_dict(self, data: dict):
-        self.saved_files_path = Path(data["saved_files_path"])
-        self.world_name = data["world_name"]
-        self.google_app_url = data["google_app_url"]
-        self.sync_period_min = data["sync_period_min"]
+        self.saved_files_path = Path(data.get("saved_files_path"))
+        self.world_name = data.get("world_name")
+        self.google_app_url = data.get("google_app_url")
+        self.autosync = data.get("autosync", False)
+        self.sync_period_min = data.get("sync_period_min")
 
 
 class AppRuntime:

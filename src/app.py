@@ -2,10 +2,11 @@ from pathlib import Path
 from PyQt6 import uic
 from loguru import logger
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PyQt6.QtCore import Qt
 from datetime import datetime
 
 from .settings import app_settings, app_runtime, synced_list
-from .app_investigation import is_steam_running, is_satisfactory_running, GameMonitorThread
+from .app_investigation import is_steam_running, is_satisfactory_running, GameMonitorThread, AutoSyncThread
 from .google_drive import get_files, get_file, push_file, SaveFile
 from .local_files import get_user_save_directory
 from .functions import compare, upload_and_download_diff
@@ -36,6 +37,7 @@ class Window(QMainWindow, window):
         self.pushButton_saved_files_path.clicked.connect(self._saved_files_path_clicked)
         self.pushButton_world_name.clicked.connect(self._world_name_clicked)
         self.pushButton_google_app_url.clicked.connect(self._google_app_url_clicked)
+        self.checkBox_autosync.checkStateChanged.connect(self._autosync_switched)
         self.pushButton_sync_period.clicked.connect(self._sync_period_clicked)
         self.pushButton_fetch.clicked.connect(self._fetch)
         
@@ -55,6 +57,9 @@ class Window(QMainWindow, window):
             
         # Google app URL
         self.lineEdit.setText(app_settings.google_app_url or "")
+        
+        # Autosync
+        self.checkBox_autosync.setChecked(app_settings.autosync)
         
         # Sync period
         self.spinBox.setValue(app_settings.sync_period_min)
@@ -112,6 +117,14 @@ class Window(QMainWindow, window):
         self._fill_gui_settings()
         self._settings_changed()
         
+    def _autosync_switched(self, state: Qt.CheckState):
+        if state == Qt.CheckState.Checked:
+            app_settings.autosync = True
+        else:
+            app_settings.autosync = False
+        app_settings.save()
+        self._fill_gui_settings()
+        
     def _sync_period_clicked(self):
         new_period = self.spinBox.value()
         app_settings.sync_period_min = new_period
@@ -133,6 +146,11 @@ class Window(QMainWindow, window):
         self.monitor_thread.status_changed.connect(self._on_game_status_changed)
         self.monitor_thread.start()
         
+        
+        self.autosync_thread = AutoSyncThread()
+        self.autosync_thread.time_passed.connect(self._fetch)
+        self.autosync_thread.start()
+        
     def _on_game_status_changed(self, is_running: bool):
         if is_running:
             self.label_satisfactory_running.setText("Running")
@@ -140,6 +158,7 @@ class Window(QMainWindow, window):
         else:
             self.label_satisfactory_running.setText("Not Running")
             logger.info("Game closed")
+            self._fetch()
             
     def _fetch(self):
         self.label_syncing.show()

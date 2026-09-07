@@ -168,6 +168,13 @@
      </widget>
     </item>
     <item>
+     <widget class="Line" name="line_4">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QCheckBox" name="checkBox_autosync">
       <property name="text">
        <string>Autosync</string>
@@ -195,7 +202,7 @@
        <item>
         <widget class="QLabel" name="label_9">
          <property name="text">
-          <string>Sync period</string>
+          <string>Sync period (minutes)</string>
          </property>
         </widget>
        </item>
