@@ -1,10 +1,14 @@
 from pathlib import Path
 from PyQt6 import uic
 from loguru import logger
-from PyQt6.QtWidgets import QMainWindow, QFileDialog
+from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
+from datetime import datetime
 
-from .settings import app_settings, app_runtime
+from .settings import app_settings, app_runtime, synced_list
 from .app_investigation import is_steam_running, is_satisfactory_running, GameMonitorThread
+from .google_drive import get_files, get_file, push_file, SaveFile
+from .local_files import get_user_save_directory
+from .functions import compare, upload_and_download_diff
 
 
 ui_path = Path(__file__).parent.parent / 'data' / 'app.ui'
@@ -16,6 +20,7 @@ class Window(QMainWindow, window):
         self._initialization = True
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
+        self.setWindowTitle("Satisfactory Save Syncer")
         
         self._connects()
         
@@ -23,10 +28,16 @@ class Window(QMainWindow, window):
         
         self._start_threads()
         
+        self.label_syncing.hide()
+        self.pushButton_fetch.setEnabled(True)
+        self.label_sync_start.hide()
+        
     def _connects(self):
         self.pushButton_saved_files_path.clicked.connect(self._saved_files_path_clicked)
+        self.pushButton_world_name.clicked.connect(self._world_name_clicked)
         self.pushButton_google_app_url.clicked.connect(self._google_app_url_clicked)
         self.pushButton_sync_period.clicked.connect(self._sync_period_clicked)
+        self.pushButton_fetch.clicked.connect(self._fetch)
         
     def _fill_gui(self):
         self._fill_gui_settings()
@@ -39,6 +50,9 @@ class Window(QMainWindow, window):
         else:
             self.label_saved_files_path.setText(str(app_settings.saved_files_path))
             
+        # World name
+        self.lineEdit_world_name.setText(app_settings.world_name)
+            
         # Google app URL
         self.lineEdit.setText(app_settings.google_app_url or "")
         
@@ -47,7 +61,11 @@ class Window(QMainWindow, window):
         
     def _fill_gui_runtime(self):
         # Latest save
-        text = app_runtime.latest_save or "Unknown"
+        newest_file = synced_list.get_newest()
+        if newest_file is None:
+            text = "No file"
+        else:
+            text = f"{newest_file.filename} ({newest_file.creation_time})"
         self.label_latest_save.setText(text)
         
         # Last sync
@@ -75,6 +93,15 @@ class Window(QMainWindow, window):
             app_settings.save()
             self._fill_gui_settings()
             self._settings_changed()
+            
+    def _world_name_clicked(self):
+        new_world_name = self.lineEdit_world_name.text().strip()
+        if new_world_name == "":
+            new_world_name = None
+        app_settings.world_name = new_world_name
+        app_settings.save()
+        self._fill_gui_settings()
+        self._settings_changed()
         
     def _google_app_url_clicked(self):
         new_url = self.lineEdit.text().strip()
@@ -113,6 +140,37 @@ class Window(QMainWindow, window):
         else:
             self.label_satisfactory_running.setText("Not Running")
             logger.info("Game closed")
+            
+    def _fetch(self):
+        self.label_syncing.show()
+        self.pushButton_fetch.setEnabled(False)
+        self.label_sync_start.setText(f"Started at: {datetime.now().strftime("%d.%m.%Y %H:%M:%S")}")
+        self.label_sync_start.show()
+        
+        QApplication.processEvents()
+        
+        global synced_list
+        
+        # 1. Load Sync list
+        synced_list.load()
+        # 2. Get list of files from Google Drive
+        drivelist = get_files()
+        # 3. Compare sync list with files available from Google Drive and files available locally
+        new_local, new_online = compare(synclist=synced_list, drivelist=drivelist, worldname=app_settings.world_name)
+        # 4. Upload/Download unsynced files & Update sync list
+        synced_list = upload_and_download_diff(new_local=new_local, new_online=new_online, synclist=synced_list)
+        synced_list.save()
+        # 5. Update runtime info
+        app_runtime.last_sync = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        app_runtime.save()
+        
+        self._fill_gui_runtime()
+        
+        self.label_syncing.hide()
+        self.pushButton_fetch.setEnabled(True)
+        self.label_sync_start.hide()
+        
+        logger.success("Sync finished")
 
     def closeEvent(self, event):
         self.monitor_thread.stop()

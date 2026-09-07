@@ -39,6 +39,50 @@ function doPost(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
+
+function doGet(e) {
+  try {
+    var folderId = "<SECRET-1>"; 
+    
+    if (e && e.parameter && e.parameter.fileId) {
+      var file = DriveApp.getFileById(e.parameter.fileId);
+      var bytes = file.getBlob().getBytes();
+      var base64Data = Utilities.base64Encode(bytes);
+      
+      return ContentService.createTextOutput(JSON.stringify({
+        "status": "success",
+        "fileName": file.getName(),
+        "updated": file.getLastUpdated().toISOString(),
+        "fileContent": base64Data
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var folder = DriveApp.getFolderById(folderId);
+    var files = folder.getFiles();
+    var fileList = [];
+    
+    while (files.hasNext()) {
+      var f = files.next();
+      fileList.push({
+        "id": f.getId(),
+        "name": f.getName(),
+        "size": f.getSize(),
+        "updated": f.getLastUpdated().toISOString()
+      });
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "success",
+      "files": fileList
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      "status": "error",
+      "message": error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
 ```
 
 Save the project
