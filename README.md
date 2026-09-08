@@ -12,7 +12,12 @@ otherwise you can just download the release .exe file and roll.
 
 ### How to start the application via Python
 
-Run: `python main.py`
+Run: 
+```powershell
+pip install -r requirements.txt
+
+python main.py
+```
 
 ### How to create .exe file on your own
 
