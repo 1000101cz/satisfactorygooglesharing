@@ -3,6 +3,11 @@
 build/*
 dist/*
 SatisfactorySaveSync.spec
+main.build/*
+main.dist/*
+main.onefile-build/*
+nuitka-crash-report.xml
+SatisfactorySaveSync.exe
 
 src/__pycache__/*
 src/settings/__pycache__/*
