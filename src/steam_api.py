@@ -28,7 +28,7 @@ def get_steam_id_from_url(profile_url: str) -> Optional[str]:
         custom_name = custom_match.group(1) if custom_match else value.split("/")[-1]
 
         # Get Steam ID
-        url = f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={self.api_key}&vanityurl={custom_name}"
+        url = f"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={app_settings.steam_api_key}&vanityurl={custom_name}"
         try:
             res = requests.get(url, timeout=5).json()
             if res.get("response", {}).get("success") == 1:
