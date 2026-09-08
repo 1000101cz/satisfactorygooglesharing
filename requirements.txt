@@ -2,3 +2,4 @@ PyQt6==6.11
 loguru==0.7.3
 psutil==7.2.2
 requests==2.34.2
+keyring==25.7.0

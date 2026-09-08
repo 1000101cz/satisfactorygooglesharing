@@ -1,5 +1,6 @@
 import os
 import json
+import keyring
 from typing import Optional, List
 from pathlib import Path
 from loguru import logger
@@ -25,6 +26,7 @@ class AppSettings:
         self.sync_period_min: int = 5
         
     def load(self):
+        self.steam_api_key = keyring.get_password("SatisfactorySaveSync", "steam_api_key") or ""
         if not _settings_path.is_file():
             logger.warning(f"Settings file not found at {_settings_path}. Creating a new one.")
             self.save()
@@ -34,6 +36,7 @@ class AppSettings:
         logger.debug(f"Settings loaded [{_settings_path}]")
         
     def save(self):
+        keyring.set_password("SatisfactorySaveSync", "steam_api_key", self.steam_api_key)
         data = self._to_dict()
         with _settings_path.open("w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
@@ -41,7 +44,6 @@ class AppSettings:
         
     def _to_dict(self) -> dict:
         return {
-            "steam_api_key": self.steam_api_key,
             "friend_list": self.friend_list,
             "saved_files_path": str(self.saved_files_path),
             "world_name": self.world_name,
@@ -51,7 +53,6 @@ class AppSettings:
         }
         
     def _from_dict(self, data: dict):
-        self.steam_api_key = data.get("steam_api_key", "")
         self.friend_list = data.get("friend_list", [])
         self.saved_files_path = Path(data.get("saved_files_path"))
         self.world_name = data.get("world_name")
