@@ -58,8 +58,11 @@ def get_file(file: SaveFile) -> Optional[SaveFile]:
             logger.error(f"Download error: {data.get('message')}")
             return None
 
-    except Exception as e:
-        logger.error("Communication error")
+    except requests.exceptions.JSONDecodeError:
+        logger.error(f"Invalid JSON response. Response: {response.text[:200]}")
+        return None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Google Drive API communication error:")
         logger.exception(e)
         return None
     
@@ -97,7 +100,14 @@ def push_file(file: SaveFile) -> Optional[SaveFile]:
             allow_redirects=True
         )
         
-        data = response.json()
+        response.raise_for_status()
+
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError:
+            logger.error(f"Google Apps Script did not return JSON. Status: {response.status_code}")
+            logger.error(f"Response (first 300 chars): {response.text[:300]}")
+            return None
 
         if data.get("status") == "success":
             uploaded_id = data.get("fileId")

@@ -51,18 +51,18 @@ def is_friend_playing_satisfactory(steam_id: str) -> Tuple[bool, str, Optional[s
             return False
 
         player = players[0]
-        persona_name = player.get("personaname", "Kamarád")
+        persona_name = player.get("personaname", "Friend")
         
-        # Pokud hru hraje, Steam API vrátí 'gameid'
         current_game_id = player.get("gameid")
         current_game_name = player.get("gameextrainfo")
 
-        # Kontrola proti AppID hry Satisfactory (526870)
+        # Compare with Satisfactory AppID (526870)
         if str(current_game_id) == str(SATISFACTORY_APP_ID):
             return True
 
         return False
 
     except Exception as e:
-        logger.error(f"Chyba při zjišťování stavu hráče: {e}")
+        logger.error(f"Friend activity detection error:")
+        logger.exception(e)
         return False

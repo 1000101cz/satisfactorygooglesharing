@@ -120,7 +120,7 @@ class Window(QMainWindow, window):
             app_settings.friend_list = updated_friends
             app_settings.save()
             
-            logger.info(f"Seznam přátel aktualizován ({len(updated_friends)} přátel).")
+            logger.info(f"Friend list updated ({len(updated_friends)} friends).")
         
     def _saved_files_path_clicked(self):
         selected_directory = QFileDialog.getExistingDirectory(

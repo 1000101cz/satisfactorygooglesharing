@@ -1,7 +1,8 @@
 import sys
 from PyQt6.QtWidgets import QApplication
-from .logging.setup import setup_logging
+from .logging.setup import setup_logging, handle_exception
 setup_logging()
+sys.excepthook = handle_exception
 
 from .app import Window
 

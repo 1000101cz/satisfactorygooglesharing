@@ -31,3 +31,11 @@ def setup_logging():
         backtrace=True,
         diagnose=True
     )
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    logger.opt(exception=(exc_type, exc_value, exc_traceback)).critical("App crashed due to an unhandled exception!")

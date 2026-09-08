@@ -43,11 +43,10 @@ class FriendListDialog(QDialog, friend_list_dialog):
         self.pushButton_remove.clicked.connect(self._remove_friend)
         self.pushButton_use.clicked.connect(self.accept)
         self.pushButton_cancel.clicked.connect(self.reject)
-        
-        # Načtení stávajících přátel (pokud nějací jsou)
+
         if current_friends:
             for friend in current_friends:
-                self._add_row_to_table(friend.get("nickname", "Neznámý"), friend.get("steam_id", ""))
+                self._add_row_to_table(friend.get("nickname", "Unknown"), friend.get("steam_id", ""))
 
     def _add_friend(self):
         url, ok = QInputDialog.getText(
@@ -99,10 +98,10 @@ class FriendListDialog(QDialog, friend_list_dialog):
             res = requests.get(url, timeout=5).json()
             players = res.get("response", {}).get("players", [])
             if players:
-                return players[0].get("personaname", "Neznámý")
+                return players[0].get("personaname", "Unknown")
         except Exception:
             pass
-        return "Neznámý"
+        return "Unknown"
 
     def get_friends_list(self) -> List[Dict[str, str]]:
         """ Get list of friends from table """
