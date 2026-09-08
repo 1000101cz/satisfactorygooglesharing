@@ -6,3 +6,4 @@ SatisfactorySaveSync.spec
 
 src/__pycache__/*
 src/settings/__pycache__/*
+src/logging/__pycache__/*
