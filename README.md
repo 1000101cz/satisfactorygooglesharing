@@ -45,17 +45,21 @@ Use the code from file `app.gs`. Next steps:
 
 1. Save the project
 
-2. Click on Deploy
+2. Under **Project settings**, set `<SECRET-1>` as value for property `SAVE_FOLDER_ID`
 
-3. Set **type**: `Web app`
+3. Generate tokens for users and send it to them.
 
-4. Set **Execute as**: `Me`
+4. Click on Deploy
 
-5. Set **Who has access**: `Anyone`.
+5. Set **type**: `Web app`
 
-6. Click on Deploy button.
+6. Set **Execute as**: `Me`
 
-Copy the app URL.
+7. Set **Who has access**: `Anyone`.
+
+8. Click on Deploy button.
+
+9. Copy the app URL.
 
 `https://script.google.com/macros/s/<SECRET-2>/exec`
 
