@@ -1,18 +1,18 @@
 from pathlib import Path
 from PyQt6 import uic
 from loguru import logger
-from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog, QDialog
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from datetime import datetime
 import webbrowser
 
 from .settings import app_settings, app_runtime, synced_list
-from .app_investigation import is_steam_running, is_satisfactory_running, GameMonitorThread, AutoSyncThread
+from .app_investigation import is_satisfactory_running, GameMonitorThread, AutoSyncThread, FriendsPlayingCheckThread
 from .google_drive import get_files
 from .functions import compare, upload_and_download_diff
 from .utils import get_resource_path
-from .dialogs import show_error_dialog
+from .dialogs import show_error_dialog, FriendListDialog
 
 
 ui_path = get_resource_path('data/app.ui')
@@ -40,6 +40,8 @@ class Window(QMainWindow, window):
         self.label_sync_start.hide()
         
     def _connects(self):
+        self.pushButton_steam_api_key.clicked.connect(self._steam_api_key_clicked)
+        self.pushButton_friend_list.clicked.connect(self._friend_list_clicked)
         self.pushButton_saved_files_path.clicked.connect(self._saved_files_path_clicked)
         self.pushButton_world_name.clicked.connect(self._world_name_clicked)
         self.pushButton_google_app_url.clicked.connect(self._google_app_url_clicked)
@@ -53,6 +55,10 @@ class Window(QMainWindow, window):
         self._fill_gui_runtime()
         
     def _fill_gui_settings(self):
+        # Steam API Key
+        self.lineEdit_steam_api_key.setText(app_settings.steam_api_key)
+        self.pushButton_friend_list.setEnabled(app_settings.steam_api_key.strip() != "")
+        
         # Saved files path
         if not isinstance(app_settings.saved_files_path, Path) or not app_settings.saved_files_path.is_dir():
             self.label_saved_files_path.setText("Not set")
@@ -84,17 +90,37 @@ class Window(QMainWindow, window):
         text = app_runtime.last_sync or "Unknown"
         self.label_last_sync.setText(text)
         
-        # Steam running
-        text = "Yes" if is_steam_running() else "No"
-        self.label_steam_running.setText(text)
-        
         # Satisfactory running
+        self.label_satisfactory_running.setStyleSheet("color: green") if is_satisfactory_running() else self.label_satisfactory_running.setStyleSheet("color: red")
         text = "Yes" if is_satisfactory_running() else "No"
         if text == "Yes":
             self.lock_play_button(True)
         else:
             self.lock_play_button(False)
         self.label_satisfactory_running.setText(text)
+        
+    def _steam_api_key_clicked(self):
+        steam_api_key = self.lineEdit_steam_api_key.text().strip()
+        app_settings.steam_api_key = steam_api_key
+        app_settings.save()
+        self._fill_gui_settings()
+        
+        self.pushButton_friend_list.setEnabled(app_settings.steam_api_key.strip() != "")
+        
+    def _friend_list_clicked(self):
+        dialog = FriendListDialog(
+            api_key=app_settings.steam_api_key,
+            current_friends=app_settings.friend_list,
+            parent=self
+        )
+        
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            updated_friends = dialog.get_friends_list()
+            
+            app_settings.friend_list = updated_friends
+            app_settings.save()
+            
+            logger.info(f"Seznam přátel aktualizován ({len(updated_friends)} přátel).")
         
     def _saved_files_path_clicked(self):
         selected_directory = QFileDialog.getExistingDirectory(
@@ -152,6 +178,11 @@ class Window(QMainWindow, window):
         self.autosync_thread.time_passed.connect(self._fetch)
         self.autosync_thread.start()
         
+        
+        self.friends_thread = FriendsPlayingCheckThread()
+        self.friends_thread.status_changed.connect(self._on_friend_playing_check)
+        self.friends_thread.start()
+        
     def _on_game_status_changed(self, is_running: bool):
         self._fill_gui()
         if is_running:
@@ -159,6 +190,12 @@ class Window(QMainWindow, window):
         else:
             logger.info("Game closed")
             self._fetch()
+            
+    def _on_friend_playing_check(self, is_playing: bool):
+        self.label_friend_playing.setStyleSheet("color: green;") if is_playing else self.label_friend_playing.setStyleSheet("color: red;")
+        text = "Friend playing" if is_playing else "Offline"
+        text = f"{text} ({datetime.now().strftime("%d.%m.%Y %H:%M:%S")})"
+        self.label_friend_playing.setText(text)
             
     def _fetch(self, manual=False):
         try:

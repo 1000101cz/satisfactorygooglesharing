@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
 from loguru import logger
 from datetime import datetime
@@ -16,9 +16,11 @@ _synced_files_path = _json_folder / 'synced_files.json'
 
 class AppSettings:
     def __init__(self):
+        self.steam_api_key: str = ""
+        self.friend_list: List[str] = []
         self.saved_files_path: Optional[Path] = get_user_save_directory()
         self.world_name: str = ""
-        self.google_app_url: Optional[str] = None
+        self.google_app_url: str = ""
         self.autosync: bool = False
         self.sync_period_min: int = 5
         
@@ -39,6 +41,8 @@ class AppSettings:
         
     def _to_dict(self) -> dict:
         return {
+            "steam_api_key": self.steam_api_key,
+            "friend_list": self.friend_list,
             "saved_files_path": str(self.saved_files_path),
             "world_name": self.world_name,
             "google_app_url": self.google_app_url,
@@ -47,6 +51,8 @@ class AppSettings:
         }
         
     def _from_dict(self, data: dict):
+        self.steam_api_key = data.get("steam_api_key", "")
+        self.friend_list = data.get("friend_list", [])
         self.saved_files_path = Path(data.get("saved_files_path"))
         self.world_name = data.get("world_name")
         self.google_app_url = data.get("google_app_url")

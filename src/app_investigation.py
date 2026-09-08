@@ -5,9 +5,6 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt
 
 GAME_PROCESS_NAMES = [name.lower() for name in ["FactoryGameSteam-Win64-Shipping.exe",
                                                 "FactoryGame-Win64-Shipping.exe"]]
-
-def is_steam_running():
-    ...
     
 def is_satisfactory_running():
     for proc in psutil.process_iter(['name']):
@@ -39,7 +36,11 @@ class GameMonitorThread(QThread):
                 if not last_state_was_none:
                     self.status_changed.emit(current_state)
 
-            time.sleep(self.interval)
+            # sleep and check for termination
+            for _ in range(self.interval):
+                time.sleep(1)
+                if not self._is_running:
+                    return
 
     def stop(self):
         self._is_running = False
@@ -58,13 +59,55 @@ class AutoSyncThread(QThread):
         while self._is_running:
             if app_settings.autosync:
                 logger.debug(f"Waiting before autosync: {app_settings.sync_period_min * 60}s")
-                time.sleep(app_settings.sync_period_min * 60)
                 if app_settings.autosync:
                     self.time_passed.emit()
                 else:
                     logger.debug("Autosync has been disabled meanwhile, skipping sync...")
+                
+                # sleep and check for termination
+                for _ in range(app_settings.sync_period_min * 60):
+                    time.sleep(1)
+                    if not self._is_running:
+                        return
             else:
                 time.sleep(1)
+
+    def stop(self):
+        self._is_running = False
+        self.wait()
+        
+
+class FriendsPlayingCheckThread(QThread):
+    # True = is running, False = is not running
+    status_changed = pyqtSignal(bool)
+
+    def __init__(self, check_interval_seconds: int = 25):
+        super().__init__()
+        self.interval = check_interval_seconds
+        self._is_running = True
+        self.last_state = None
+
+    def run(self):
+        from .steam_api import is_friend_playing_satisfactory
+        from .settings import app_settings
+        while self._is_running:
+            friend_playing = False
+            if app_settings.steam_api_key.strip() != "":
+                for friend in app_settings.friend_list:
+                    if is_friend_playing_satisfactory(friend["steam_id"]):
+                        friend_playing = True
+                        logger.debug(f"Friend '{friend["nickname"]}' [{friend["steam_id"]}] is playing Satisfactory right now")
+                        self.status_changed.emit(True)
+                if not friend_playing:
+                    if len(app_settings.friend_list):
+                        logger.debug(f"No friend is playing Satosfactory ({len(app_settings.friend_list)} friends specified)")
+                    self.status_changed.emit(False)
+            
+            # sleep and check for termination
+            for _ in range(self.interval):
+                time.sleep(1)
+                if not self._is_running:
+                    return
 
     def stop(self):
         self._is_running = False
