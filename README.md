@@ -29,7 +29,7 @@ Clear project folder: `.\clear.ps1`
 
 ## Shared google folder creation
 
-Create folder in your Google Drive, set it as shared - via link and allow everyone with the link to read and write in there.
+Create folder in your Google Drive, set it as shared - via link and set assess as `Limited - Only me`.
 
 Copy the link:
 
@@ -41,101 +41,7 @@ You will need the `<SECRET-1>` value later
 
 Create new project in Google Apps Script (script.google.com).
 
-Use this code:
-
-```js
-const SECRET_TOKEN = "<GENERATED-SECRET-TOKEN>";
-
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    
-    // Verify token
-    if (data.token !== SECRET_TOKEN) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: "error",
-        message: "Unauthorized"
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // Google Drive shared folder's ID
-    var folderId = "<SECRET-1>"; 
-    var folder = DriveApp.getFolderById(folderId);
-    
-    var fileName = data.fileName;
-    var fileData = Utilities.base64Decode(data.fileContent);
-    var blob = Utilities.newBlob(fileData, data.mimeType, fileName);
-    
-    // File creation
-    var file = folder.createFile(blob);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      "status": "success",
-      "fileId": file.getId()
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      "status": "error",
-      "message": error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function doGet(e) {
-  try {
-    // verify token
-    if (e.parameter.token !== SECRET_TOKEN) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: "error",
-        message: "Unauthorized"
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    var folderId = "<SECRET-1>"; 
-    
-    if (e && e.parameter && e.parameter.fileId) {
-      var file = DriveApp.getFileById(e.parameter.fileId);
-      var bytes = file.getBlob().getBytes();
-      var base64Data = Utilities.base64Encode(bytes);
-      
-      return ContentService.createTextOutput(JSON.stringify({
-        "status": "success",
-        "fileName": file.getName(),
-        "updated": file.getLastUpdated().toISOString(),
-        "fileContent": base64Data
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    var folder = DriveApp.getFolderById(folderId);
-    var files = folder.getFiles();
-    var fileList = [];
-    
-    while (files.hasNext()) {
-      var f = files.next();
-      fileList.push({
-        "id": f.getId(),
-        "name": f.getName(),
-        "size": f.getSize(),
-        "updated": f.getLastUpdated().toISOString()
-      });
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      "status": "success",
-      "files": fileList
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      "status": "error",
-      "message": error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}
-```
-
-Replace the `<SECRET-1>` value with the one from Google Drive folder share link. Now:
+Use the code from file `app.gs`. Next steps:
 
 1. Save the project
 
