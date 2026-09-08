@@ -1,8 +1,22 @@
 # Satisfactory Google Drive Sharing
 
-Python 3.13.9
+Desktop application for synchronization of **Satisfactory** save files with your friends via **Google Drive**.
+
+## Requirements
+
+If you want to run the python code by your own, I suggest to use this Python version:
+
+`Python 3.13.9`
+
+otherwise you can just download the release .exe file and roll.
+
+### How to start the application via Python
 
 Run: `python main.py`
+
+### How to create .exe file on your own
+
+You can use the following PowerShell scripts:
 
 Build exe: `.\build.ps1`
 
@@ -10,11 +24,13 @@ Clear project folder: `.\clear.ps1`
 
 ## Shared google folder creation
 
-Create folder in your google Drive, set it as shared - via link and allow everyone with the link to read and write in there.
+Create folder in your Google Drive, set it as shared - via link and allow everyone with the link to read and write in there.
 
-Copy the link
+Copy the link:
 
 `https://drive.google.com/drive/folders/<SECRET-1>?usp=sharing`
+
+You will need the `<SECRET-1>` value later
 
 ## Google App Script creation
 
@@ -95,19 +111,23 @@ function doGet(e) {
 }
 ```
 
-Save the project
+Replace the `<SECRET-1>` value with the one from Google Drive folder share link. Now:
 
-Click on Deploy
+1. Save the project
 
-Set `Web app` as type.
+2. Click on Deploy
 
-Set `Execute as` as Me.
+3. Set **type**: `Web app`
 
-Set `Who has access` as Anyone.
+4. Set **Execute as**: `Me`
 
-Click on Deploy button.
+5. Set **Who has access**: `Anyone`.
+
+6. Click on Deploy button.
 
 Copy the app URL.
 
 `https://script.google.com/macros/s/<SECRET-2>/exec`
+
+You will need to share `<SECRET-2>` value with your friend. All of you will need to use in the the Sync app.
 
