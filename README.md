@@ -49,6 +49,16 @@ Use the code from file `app.gs`. Next steps:
 
 3. Generate tokens for users and send it to them.
 
+    To do that, you can add function like this at the end of the .gs file
+
+   ```js
+   function generateTokenClientX() {
+     generateToken("ClientX")
+   }
+   ```
+
+      and than click on `Run` button for function `generateTokenClientX`. The generated token will be shown at the bottom. Send it to your friend. You will need to generate a token for yourself as well.
+
 4. Click on Deploy
 
 5. Set **type**: `Web app`
