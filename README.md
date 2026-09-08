@@ -134,5 +134,5 @@ Copy the app URL.
 
 `https://script.google.com/macros/s/<SECRET-2>/exec`
 
-You will need to share `<SECRET-2>` value with your friend. All of you will need to use in the the Sync app.
+You will need to share this URL with your friends. All of you will need to use in the the Sync app.
 
