@@ -16,7 +16,6 @@
  * The Google Drive folder itself should NOT be public.
  */
 
-
 /**
  * Configuration
  */
@@ -25,9 +24,29 @@ const MAX_FILENAME_LENGTH = 200;
 
 
 /**
- * Upload a file.
+ * Handle all API requests.
  *
- * This remains compatible with the existing google_drive.py.
+ * Supported operations:
+ *
+ * UPLOAD:
+ * {
+ *   "token": "...",
+ *   "fileName": "save.sav",
+ *   "fileContent": "base64..."
+ * }
+ *
+ * LIST:
+ * {
+ *   "token": "...",
+ *   "action": "list"
+ * }
+ *
+ * DOWNLOAD:
+ * {
+ *   "token": "...",
+ *   "action": "download",
+ *   "fileId": "..."
+ * }
  */
 function doPost(e) {
   try {
@@ -42,95 +61,19 @@ function doPost(e) {
       return errorResponse("Unauthorized");
     }
 
-    const fileName = data.fileName;
-    const fileContent = data.fileContent;
-
-    // Only allow Satisfactory save files.
-    if (!isValidSaveFilename(fileName)) {
-      return errorResponse("Invalid file name");
-    }
-
-    if (!fileContent || typeof fileContent !== "string") {
-      return errorResponse("Missing file content");
-    }
-
-    // Base64 is larger than the original file.
-    if (fileContent.length > MAX_FILE_SIZE * 1.4) {
-      return errorResponse("File too large");
-    }
-
-    const fileData = Utilities.base64Decode(fileContent);
-
-    if (fileData.length > MAX_FILE_SIZE) {
-      return errorResponse("File too large");
-    }
-
-    const folder = getSaveFolder();
-
-    const blob = Utilities.newBlob(
-      fileData,
-      "application/octet-stream",
-      fileName
-    );
-
-    /*
-     * Remove an existing save with the same name.
-     *
-     * This prevents every sync from creating another copy.
-     */
-    const existingFiles = folder.getFilesByName(fileName);
-
-    while (existingFiles.hasNext()) {
-      const existingFile = existingFiles.next();
-
-      // Extra safety: make sure this is actually in our folder.
-      if (existingFile.getParents().hasNext()) {
-        existingFile.setTrashed(true);
-      }
-    }
-
-    const file = folder.createFile(blob);
-
-    return successResponse({
-      status: "success",
-      fileId: file.getId()
-    });
-
-  } catch (error) {
-    console.error(error);
-
-    // Do NOT expose internal error details.
-    return errorResponse("Internal server error");
-  }
-}
-
-
-/**
- * Download a file or list available saves.
- *
- * Compatible with the existing google_drive.py.
- */
-function doGet(e) {
-  try {
-    if (!e || !e.parameter) {
-      return errorResponse("Invalid request");
-    }
-
-    // Authenticate first.
-    if (!isValidToken(e.parameter.token)) {
-      return errorResponse("Unauthorized");
-    }
-
-    const folder = getSaveFolder();
-
-    /*
+    /**
+     * ================================================================
      * DOWNLOAD
-     *
-     * Only permit files that are actually inside our
-     * configured Satisfactory folder.
+     * ================================================================
      */
-    if (e.parameter.fileId) {
-      const fileId = e.parameter.fileId;
+    if (data.action === "download") {
+      const fileId = data.fileId;
+
+      if (!fileId || typeof fileId !== "string") {
+        return errorResponse("Missing file ID");
+      }
+
+      const folder = getSaveFolder();
 
       let file;
 
@@ -165,37 +108,104 @@ function doGet(e) {
     }
 
 
-    /*
+    /**
+     * ================================================================
      * LIST FILES
+     * ================================================================
      */
-    const files = folder.getFiles();
-    const fileList = [];
+    if (data.action === "list") {
+      const folder = getSaveFolder();
+      const files = folder.getFiles();
+      const fileList = [];
 
-    while (files.hasNext()) {
-      const file = files.next();
+      while (files.hasNext()) {
+        const file = files.next();
 
-      // Never expose anything except .sav files.
-      if (!isValidSaveFilename(file.getName())) {
-        continue;
+        // Never expose anything except .sav files.
+        if (!isValidSaveFilename(file.getName())) {
+          continue;
+        }
+
+        fileList.push({
+          id: file.getId(),
+          name: file.getName(),
+          size: file.getSize(),
+          updated: file.getLastUpdated().toISOString()
+        });
       }
 
-      fileList.push({
-        id: file.getId(),
-        name: file.getName(),
-        size: file.getSize(),
-        updated: file.getLastUpdated().toISOString()
+      return successResponse({
+        status: "success",
+        files: fileList
       });
     }
 
+
+    /**
+     * ================================================================
+     * UPLOAD
+     * ================================================================
+     *
+     * This remains compatible with the existing google_drive.py.
+     */
+    const fileName = data.fileName;
+    const fileContent = data.fileContent;
+
+    // Only allow Satisfactory save files.
+    if (!isValidSaveFilename(fileName)) {
+      return errorResponse("Invalid file name");
+    }
+
+    if (!fileContent || typeof fileContent !== "string") {
+      return errorResponse("Missing file content");
+    }
+
+    // Base64 is larger than the original file.
+    if (fileContent.length > MAX_FILE_SIZE * 1.4) {
+      return errorResponse("File too large");
+    }
+
+    const fileData = Utilities.base64Decode(fileContent);
+
+    if (fileData.length > MAX_FILE_SIZE) {
+      return errorResponse("File too large");
+    }
+
+    const folder = getSaveFolder();
+
+    const blob = Utilities.newBlob(
+      fileData,
+      "application/octet-stream",
+      fileName
+    );
+
+    /**
+     * Remove an existing save with the same name.
+     *
+     * This prevents every sync from creating another copy.
+     */
+    const existingFiles = folder.getFilesByName(fileName);
+
+    while (existingFiles.hasNext()) {
+      const existingFile = existingFiles.next();
+
+      // Extra safety: make sure this is actually in our folder.
+      if (existingFile.getParents().hasNext()) {
+        existingFile.setTrashed(true);
+      }
+    }
+
+    const file = folder.createFile(blob);
+
     return successResponse({
       status: "success",
-      files: fileList
+      fileId: file.getId()
     });
 
   } catch (error) {
     console.error(error);
 
-    // Don't expose internal details.
+    // Do NOT expose internal error details.
     return errorResponse("Internal server error");
   }
 }
@@ -298,7 +308,7 @@ function isValidSaveFilename(fileName) {
    *
    * and require .sav at the end.
    */
-  return /^[A-Za-z0-9 _.-]+\.sav$/i.test(fileName);
+  return /^[A-Za-z0-9_.-]+\.sav$/i.test(fileName);
 }
 
 
@@ -315,7 +325,6 @@ function sha256(value) {
   return digest
     .map(function(byte) {
       const unsignedByte = byte < 0 ? byte + 256 : byte;
-
       return ("0" + unsignedByte.toString(16)).slice(-2);
     })
     .join("");
