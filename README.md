@@ -44,13 +44,24 @@ Create new project in Google Apps Script (script.google.com).
 Use this code:
 
 ```js
+const SECRET_TOKEN = "<GENERATED-SECRET-TOKEN>";
+
 function doPost(e) {
   try {
+    const data = JSON.parse(e.postData.contents);
+    
+    // Verify token
+    if (data.token !== SECRET_TOKEN) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "error",
+        message: "Unauthorized"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Google Drive shared folder's ID
     var folderId = "<SECRET-1>"; 
     var folder = DriveApp.getFolderById(folderId);
     
-    var data = JSON.parse(e.postData.contents);
     var fileName = data.fileName;
     var fileData = Utilities.base64Decode(data.fileContent);
     var blob = Utilities.newBlob(fileData, data.mimeType, fileName);
@@ -73,6 +84,14 @@ function doPost(e) {
 
 function doGet(e) {
   try {
+    // verify token
+    if (e.parameter.token !== SECRET_TOKEN) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "error",
+        message: "Unauthorized"
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     var folderId = "<SECRET-1>"; 
     
     if (e && e.parameter && e.parameter.fileId) {

@@ -22,11 +22,13 @@ class AppSettings:
         self.saved_files_path: Optional[Path] = get_user_save_directory()
         self.world_name: str = ""
         self.google_app_url: str = ""
+        self.google_app_token: str = ""
         self.autosync: bool = False
         self.sync_period_min: int = 5
         
     def load(self):
         self.steam_api_key = keyring.get_password("SatisfactorySaveSync", "steam_api_key") or ""
+        self.google_app_token = keyring.get_password("SatisfactorySaveSync", "google_app_token") or ""
         if not _settings_path.is_file():
             logger.warning(f"Settings file not found at {_settings_path}. Creating a new one.")
             self.save()
@@ -37,6 +39,7 @@ class AppSettings:
         
     def save(self):
         keyring.set_password("SatisfactorySaveSync", "steam_api_key", self.steam_api_key)
+        keyring.set_password("SatisfactorySaveSync", "google_app_token", self.google_app_token)
         data = self._to_dict()
         with _settings_path.open("w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)

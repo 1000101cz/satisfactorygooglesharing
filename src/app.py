@@ -45,6 +45,7 @@ class Window(QMainWindow, window):
         self.pushButton_saved_files_path.clicked.connect(self._saved_files_path_clicked)
         self.pushButton_world_name.clicked.connect(self._world_name_clicked)
         self.pushButton_google_app_url.clicked.connect(self._google_app_url_clicked)
+        self.pushButton_google_app_token.clicked.connect(self._google_app_token_clicked)
         self.checkBox_autosync.checkStateChanged.connect(self._autosync_switched)
         self.pushButton_sync_period.clicked.connect(self._sync_period_clicked)
         self.pushButton_fetch.clicked.connect(lambda: self._fetch(manual=True))
@@ -70,6 +71,9 @@ class Window(QMainWindow, window):
             
         # Google app URL
         self.lineEdit.setText(app_settings.google_app_url or "")
+        
+        # Google app token
+        self.lineEdit_google_app_token.setText(app_settings.google_app_token)
         
         # Autosync
         self.checkBox_autosync.setChecked(app_settings.autosync)
@@ -151,6 +155,12 @@ class Window(QMainWindow, window):
         app_settings.save()
         self._fill_gui_settings()
         
+    def _google_app_token_clicked(self):
+        new_token = self.lineEdit_google_app_token.text().strip()
+        app_settings.google_app_token = new_token
+        app_settings.save()
+        self._fill_gui_settings()
+        
     def _autosync_switched(self, state: Qt.CheckState):
         if state == Qt.CheckState.Checked:
             app_settings.autosync = True
@@ -201,7 +211,7 @@ class Window(QMainWindow, window):
         try:
             logger.info("Starting synchronization...")
             
-            if app_settings.google_app_url is None:
+            if app_settings.google_app_url in [None, ""]:
                 raise ValueError("Google App URL not defined!")
             
             self.label_syncing.show()

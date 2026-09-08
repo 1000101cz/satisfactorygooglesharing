@@ -3,40 +3,40 @@ import requests
 from datetime import datetime
 from typing import Optional, List
 from loguru import logger
-from pathlib import Path
 from .settings import app_settings
 from .settings.settings import SaveFile
 
 
 def get_files() -> List[SaveFile]:
-    try:
-        response = requests.get(app_settings.google_app_url, timeout=15)
-        data = response.json()
-        
-        if data.get("status") == "success":
-            drive_dicts = data.get("files", [])
-            output = []
-            for drive_dict in drive_dicts:
-                fl = SaveFile()
-                fl.from_drive_dict(drive_dict)
-                if fl.local_path.suffix != '.sav':
-                    continue
-                output.append(fl)
-            return output
+    params = {"token": app_settings.google_app_token}
+    response = requests.get(app_settings.google_app_url, params=params, timeout=15)
+    data = response.json()
+    
+    if data.get("status") == "success":
+        drive_dicts = data.get("files", [])
+        output = []
+        for drive_dict in drive_dicts:
+            fl = SaveFile()
+            fl.from_drive_dict(drive_dict)
+            if fl.local_path.suffix != '.sav':
+                continue
+            output.append(fl)
+        return output
+    else:
+        logger.error(f"Server error: {data.get('message')}")
+        if data.get('message') == "Unauthorized":
+            text = "Invalid Google App Token value!"
         else:
-            print(f"Server error: {data.get('message')}")
-            return []
-
-    except Exception as e:
-        logger.error(f"Communication error with Google Drive: {e}")
-        return []
+            text = data.get('message')
+        raise RuntimeError(text)
 
 def get_file(file: SaveFile) -> Optional[SaveFile]:
     try:
         logger.info(f"Downloading file from Google Drive: {file.filename} (ID: {file.drive_id})")
         
         download_url = f"{app_settings.google_app_url}?fileId={file.drive_id}"
-        response = requests.get(download_url, timeout=30)
+        params = {"token": app_settings.google_app_token}
+        response = requests.get(download_url, params=params, timeout=30)
         data = response.json()
 
         if data.get("status") == "success":
@@ -88,6 +88,7 @@ def push_file(file: SaveFile) -> Optional[SaveFile]:
         encoded_content = base64.b64encode(file_bytes).decode("utf-8")
 
         payload = {
+            "token": app_settings.google_app_token,
             "fileName": filename,
             "mimeType": "application/octet-stream",
             "fileContent": encoded_content
